@@ -3,6 +3,13 @@ import shutil
 import sqlite3
 import json
 
+# BELOW: defining constants
+
+USER = "user"
+ASSISANT = "assistant"
+NAME = "Ray Del Vecchio"
+SYSTEM_PROMPT = f"You are to respond to text messages as {NAME}."
+
 def copy_imessage_database():
     """
     Copy the iMessage database to the specified directory or current working directory.
@@ -96,6 +103,8 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False, sa
             handle h ON h.ROWID = m.handle_id
         WHERE 
             c.chat_identifier NOT LIKE 'chat%'  -- Exclude group chats
+            AND m.text IS NOT NULL
+            AND m.text != ''
             AND m.text NOT LIKE '%Liked%'
             AND m.text NOT LIKE '%Loved%'
             AND m.text NOT LIKE '%Emphasized%'
@@ -125,7 +134,7 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False, sa
         # BELOW: formatting the messaging for fine tuning
 
         finetune_data = []
-        chat_messages = {"messages": []}
+        chat_messages = {"messages": [{"role": "system", "content": SYSTEM_PROMPT}]}
         current_chat = None
         user_messages = []
         assistant_messages = []
@@ -137,26 +146,29 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False, sa
             if current_chat != chat_identifier:  # adding leftover messages and resetting to process a new chat
                 if user_messages and assistant_messages:
                     chat_messages['messages'].append({
-                        "role": "User",
+                        "role": USER,
                         "content": "<NEWMESSAGE>".join(user_messages)
                     })
                     chat_messages['messages'].append({
-                        "role": "Assistant",
+                        "role": ASSISANT,
                         "content": "<NEWMESSAGE>".join(assistant_messages)
                     })
                 
-                if (chat_messages['messages']):
-                    finetune_data.append(chat_messages)
+                if len(chat_messages['messages']) > 1:  # the last message cannot be a user message, since it isn't useful to the fine tune
+                    if chat_messages['messages'] and chat_messages['messages'][-1]['role'] != USER:
+                        finetune_data.append(chat_messages)
+                    elif len(chat_messages['messages']) > 1:
+                        finetune_data.append({"messages": chat_messages['messages'][:-1]})
                     
                 current_chat = chat_identifier
                 user_messages = []
                 assistant_messages = []
-                chat_messages = {"messages": []}
+                chat_messages = {"messages": [{"role": "system", "content": SYSTEM_PROMPT}]}
 
             if sender != "Me":
                 if assistant_messages:
                     chat_messages['messages'].append({
-                        "role": "Assistant",
+                        "role": ASSISANT,
                         "content": "<NEWMESSAGE>".join(assistant_messages)
                     })
                     assistant_messages = []
@@ -164,7 +176,7 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False, sa
             else:
                 if user_messages:
                     chat_messages['messages'].append({
-                        "role": "User",
+                        "role": USER,
                         "content": "<NEWMESSAGE>".join(user_messages)
                     })
                     user_messages = []
@@ -172,12 +184,12 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False, sa
 
         if user_messages:  # adding leftover messages from the database after the loop completes jic
             chat_messages['messages'].append({
-                "role": "User",
+                "role": USER,
                 "content": "<NEWMESSAGE>".join(user_messages)
             })
         if assistant_messages:
             chat_messages['messages'].append({
-                "role": "Assistant",
+                "role": ASSISANT,
                 "content": "<NEWMESSAGE>".join(assistant_messages)
             })
 
