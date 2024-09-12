@@ -67,6 +67,6 @@ def get_database_structure(db_path: str = 'imessages.db') -> dict:
     except sqlite3.Error as e:
         print(f"Error: Unable to get database structure. {e}")
         return None
-
+    
 if __name__ == "__main__":
     print(get_database_structure())

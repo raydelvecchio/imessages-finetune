@@ -1,6 +1,29 @@
 # iMessage Finetune
 Attempting to fine tune an LLM to sound like a user, fine tuned on all iMessages stored locally on Mac.
 
+# Methodology
+* To fine tune on a user's iMessages, we must first pre-process into a fine-tunable format
+* We will select all non-group chat messages, constructing the LLM input format of messages where the "User" is the other person talking, for as many messages until we respect, and the "Assistant" is the user's response in the message
+    * For example, if I have a chat with Alice that looks like this:
+        ```
+        {
+            "Alice": "Hey, how are you?",
+            "Me": "I'm doing well, thanks! How about you?",
+            "Alice": "Not bad, just busy with work. Did you finish that project?",
+            "Me": "Yes, I did! It was challenging but rewarding."
+        }
+        ```
+    * The LLM input format would be:
+        ```
+        {
+            "User": "Hey, how are you?",
+            "Assistant": "I'm doing well, thanks! How about you?",
+            "User": "Not bad, just busy with work. Did you finish that project?",
+            "Assistant": "Yes, I did! It was challenging but rewarding."
+        }
+        ```
+* Ideally, we should also detect links, and scrape them if we can, to best capture the context in which the user is responding
+
 # iMessages Local Database
 
 The iMessages database is stored locally on Mac as an SQLite database file:
