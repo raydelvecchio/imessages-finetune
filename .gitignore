@@ -79,3 +79,6 @@ poetry.lock
 *.db
 *.db-shm
 *.db-wal
+
+# JSON Files
+*.json

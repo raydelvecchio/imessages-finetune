@@ -69,10 +69,11 @@ def get_database_structure(db_path: str = 'imessages.db') -> dict:
         print(f"Error: Unable to get database structure. {e}")
         return None
 
-def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False) -> list:
+def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False, save_to_file: bool = True) -> list:
     """
     Execute SQL query to get non-group chat messages and format them for fine-tuning.
     If test_mode is True, only process the first non-group chat.
+    If save_to_file is True, save the fine-tuning data to a JSON file.
     """
     try:
         conn = sqlite3.connect(db_path)
@@ -114,7 +115,8 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False) ->
         cursor.execute(query)
         results = cursor.fetchall()
 
-        # Format the messages for fine-tuning
+        # BELOW: formatting the messaging for fine tuning
+
         finetune_data = []
         current_chat = None
         user_messages = []
@@ -122,10 +124,9 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False) ->
 
         for sender, message, chat_identifier, _ in results:
             if message is None:
-                continue  # Skip messages with None content
+                continue
 
-            if current_chat != chat_identifier:
-                # Add the previous conversation if it exists
+            if current_chat != chat_identifier:  # adding leftover messages and resetting to process a new chat
                 if user_messages and assistant_messages:
                     finetune_data.append({
                         "role": "User",
@@ -135,7 +136,6 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False) ->
                         "role": "Assistant",
                         "content": "<NEWMESSAGE>".join(assistant_messages)
                     })
-                # Reset for new chat
                 current_chat = chat_identifier
                 user_messages = []
                 assistant_messages = []
@@ -157,8 +157,7 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False) ->
                     user_messages = []
                 assistant_messages.append(message)
 
-        # Add the last conversation if it exists
-        if user_messages:
+        if user_messages:  # adding leftover messages from the database after the loop completes jic
             finetune_data.append({
                 "role": "User",
                 "content": "<NEWMESSAGE>".join(user_messages)
@@ -170,6 +169,12 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False) ->
             })
 
         conn.close()
+
+        if save_to_file:
+            with open('imessage_finetune.json', 'w') as f:
+                json.dump(finetune_data, f, indent=2)
+            print("Fine-tuning data saved to imessage_finetune.json")
+
         return finetune_data
 
     except sqlite3.Error as e:
@@ -177,6 +182,6 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False) ->
         return None
 
 if __name__ == "__main__":
-    finetune_data = get_finetune_data(test_mode=True)
+    finetune_data = get_finetune_data()
     if finetune_data:
         print(json.dumps(finetune_data, indent=2))
