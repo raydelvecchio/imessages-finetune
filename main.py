@@ -208,6 +208,5 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False, sa
         return None
 
 if __name__ == "__main__":
-    finetune_data = get_finetune_data()
-    if finetune_data:
-        print(json.dumps(finetune_data, indent=2))
+    copy_imessage_database()
+    get_finetune_data(save_to_file=True)
