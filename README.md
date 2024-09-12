@@ -23,6 +23,7 @@ Attempting to fine tune an LLM to sound like a user, fine tuned on all iMessages
         }
         ```
 * Ideally, we should also detect links, and scrape them if we can, to best capture the context in which the user is responding
+* Currently, we ignore all tapbacks, just focusing on text generation
 
 # iMessages Local Database
 

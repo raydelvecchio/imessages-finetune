@@ -73,7 +73,8 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False, sa
     """
     Execute SQL query to get non-group chat messages and format them for fine-tuning.
     If test_mode is True, only process the first non-group chat.
-    If save_to_file is True, save the fine-tuning data to a JSON file.
+    If save_to_file is True, save the fine-tuning data to a JSONL file.
+    Ignores all tapbacks (e.g., "Liked", "Questioned", etc.).
     """
     try:
         conn = sqlite3.connect(db_path)
@@ -95,6 +96,12 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False, sa
             handle h ON h.ROWID = m.handle_id
         WHERE 
             c.chat_identifier NOT LIKE 'chat%'  -- Exclude group chats
+            AND m.text NOT LIKE '%Liked%'
+            AND m.text NOT LIKE '%Loved%'
+            AND m.text NOT LIKE '%Emphasized%'
+            AND m.text NOT LIKE '%Disliked%'
+            AND m.text NOT LIKE '%Laughed at%'
+            AND m.text NOT LIKE '%Questioned%'  -- Exclude messages containing tapbacks
         """
 
         if test_mode:
@@ -118,31 +125,37 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False, sa
         # BELOW: formatting the messaging for fine tuning
 
         finetune_data = []
+        chat_messages = {"messages": []}
         current_chat = None
         user_messages = []
         assistant_messages = []
 
         for sender, message, chat_identifier, _ in results:
-            if message is None:
+            if message is None or any(word in message.strip() for word in ['Liked', 'Loved', 'Emphasized', 'Disliked', 'Laughed at', 'Questioned']):
                 continue
 
             if current_chat != chat_identifier:  # adding leftover messages and resetting to process a new chat
                 if user_messages and assistant_messages:
-                    finetune_data.append({
+                    chat_messages['messages'].append({
                         "role": "User",
                         "content": "<NEWMESSAGE>".join(user_messages)
                     })
-                    finetune_data.append({
+                    chat_messages['messages'].append({
                         "role": "Assistant",
                         "content": "<NEWMESSAGE>".join(assistant_messages)
                     })
+                
+                if (chat_messages['messages']):
+                    finetune_data.append(chat_messages)
+                    
                 current_chat = chat_identifier
                 user_messages = []
                 assistant_messages = []
+                chat_messages = {"messages": []}
 
             if sender != "Me":
                 if assistant_messages:
-                    finetune_data.append({
+                    chat_messages['messages'].append({
                         "role": "Assistant",
                         "content": "<NEWMESSAGE>".join(assistant_messages)
                     })
@@ -150,7 +163,7 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False, sa
                 user_messages.append(message)
             else:
                 if user_messages:
-                    finetune_data.append({
+                    chat_messages['messages'].append({
                         "role": "User",
                         "content": "<NEWMESSAGE>".join(user_messages)
                     })
@@ -158,12 +171,12 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False, sa
                 assistant_messages.append(message)
 
         if user_messages:  # adding leftover messages from the database after the loop completes jic
-            finetune_data.append({
+            chat_messages['messages'].append({
                 "role": "User",
                 "content": "<NEWMESSAGE>".join(user_messages)
             })
         if assistant_messages:
-            finetune_data.append({
+            chat_messages['messages'].append({
                 "role": "Assistant",
                 "content": "<NEWMESSAGE>".join(assistant_messages)
             })
@@ -171,9 +184,10 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False, sa
         conn.close()
 
         if save_to_file:
-            with open('imessage_finetune.json', 'w') as f:
-                json.dump(finetune_data, f, indent=2)
-            print("Fine-tuning data saved to imessage_finetune.json")
+            with open('imessage_finetune.jsonl', 'w') as f:
+                for item in finetune_data:
+                    f.write(json.dumps(item) + '\n')
+            print("Fine-tuning data saved to imessage_finetune.jsonl")
 
         return finetune_data
 
