@@ -2,7 +2,7 @@
 Attempting to fine tune an LLM to sound like a user, fine tuned on all iMessages stored locally on Mac.
 
 # Methodology
-* To fine tune on a user's iMessages, we must first pre-process into a fine-tunable format
+* To fine tune on a user's iMessages, we must first pre-process into a fine-tunable JSONL format, as defined by: https://platform.openai.com/docs/guides/fine-tuning/preparing-your-dataset
 * We will select all non-group chat messages, constructing the LLM input format of messages where the "User" is the other person talking, for as many messages until we respect, and the "Assistant" is the user's response in the message
     * For example, if I have a chat with Alice that looks like this:
         ```

@@ -5,6 +5,9 @@ import json
 
 # BELOW: defining constants
 
+NATIVE_MESSAGES_LOCATION = "~/Library/Messages/chat.db"
+MESSAGES_DB = "imessages.db"
+TUNE_FILE = "finetune.jsonl"
 USER = "user"
 ASSISANT = "assistant"
 NAME = "Ray Del Vecchio"
@@ -14,9 +17,9 @@ def copy_imessage_database():
     """
     Copy the iMessage database to the specified directory or current working directory.
     """
-    source_path = os.path.expanduser("~/Library/Messages/chat.db")
+    source_path = os.path.expanduser(NATIVE_MESSAGES_LOCATION)
         
-    destination_path = os.path.join(os.getcwd(), "imessages.db")
+    destination_path = os.path.join(os.getcwd(), MESSAGES_DB)
 
     if not os.path.exists(source_path):
         print(f"Error: iMessage database not found at {source_path}")
@@ -40,7 +43,7 @@ def copy_imessage_database():
     
     return None
 
-def get_database_structure(db_path: str = 'imessages.db') -> dict:
+def get_database_structure(db_path: str = MESSAGES_DB) -> dict:
     """
     Get the tables and structure of the database.
     """
@@ -76,7 +79,7 @@ def get_database_structure(db_path: str = 'imessages.db') -> dict:
         print(f"Error: Unable to get database structure. {e}")
         return None
 
-def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False, save_to_file: bool = True) -> list:
+def get_finetune_data(db_path: str = MESSAGES_DB, test_mode: bool = False, save_to_file: bool = True) -> list:
     """
     Execute SQL query to get non-group chat messages and format them for fine-tuning.
     If test_mode is True, only process the first non-group chat.
@@ -196,10 +199,10 @@ def get_finetune_data(db_path: str = 'imessages.db', test_mode: bool = False, sa
         conn.close()
 
         if save_to_file:
-            with open('imessage_finetune.jsonl', 'w') as f:
+            with open(TUNE_FILE, 'w') as f:
                 for item in finetune_data:
                     f.write(json.dumps(item) + '\n')
-            print("Fine-tuning data saved to imessage_finetune.jsonl")
+            print(f"Fine-tuning data saved to {TUNE_FILE}")
 
         return finetune_data
 
