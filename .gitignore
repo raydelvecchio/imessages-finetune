@@ -1,0 +1,79 @@
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# Ignore distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Ignore PyInstaller
+*.manifest
+*.spec
+
+# Ignore Jupyter Notebook
+.ipynb_checkpoints
+
+# Ignore pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Ignore mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Ignore environment files
+.env
+.env.local
+.env.*.local
+
+# Ignore log files
+*.log
+
+# Ignore IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore database files
+*.sqlite
+*.db
+
+# Ignore backup files
+*.bak
+*.backup
+
+# Ignore pipenv / poetry lock files
+Pipfile.lock
+poetry.lock
+
+# Database and SQL stuff
+*.db
