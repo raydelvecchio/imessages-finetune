@@ -28,12 +28,6 @@ def create_fine_tuning_job(file_id: str, model: str = "gpt-4o") -> str:
 def check_fine_tuning_status(job_id: str) -> str:
     """
     Check the status of a fine-tuning job.
-    
-    Args:
-    job_id (str): The ID of the fine-tuning job
-    
-    Returns:
-    str: The status of the fine-tuning job
     """
     response = client.fine_tuning.jobs.retrieve(job_id)
     return response.status
@@ -41,13 +35,6 @@ def check_fine_tuning_status(job_id: str) -> str:
 def use_fine_tuned_model(model: str, messages: list) -> str:
     """
     Use the fine-tuned model to generate a response.
-    
-    Args:
-    model (str): The name of the fine-tuned model
-    messages (list): A list of message dictionaries
-    
-    Returns:
-    str: The generated response
     """
     response = client.chat.completions.create(
         model=model,
